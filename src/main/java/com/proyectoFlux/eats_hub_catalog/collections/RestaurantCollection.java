@@ -27,7 +27,7 @@ public class RestaurantCollection {
 
 
     private String name;
-    private int capacity;
+    private Integer capacity;
     private Address address;
     @Indexed
     private String cuisineType;
