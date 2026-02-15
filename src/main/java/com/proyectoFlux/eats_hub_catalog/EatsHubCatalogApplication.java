@@ -1,6 +1,10 @@
 package com.proyectoFlux.eats_hub_catalog;
 
+import com.proyectoFlux.eats_hub_catalog.collections.ReservationCollection;
 import com.proyectoFlux.eats_hub_catalog.enums.PriceEnum;
+import com.proyectoFlux.eats_hub_catalog.enums.ReservationStatusEnum;
+import com.proyectoFlux.eats_hub_catalog.repositories.ReservationRepository;
+import com.proyectoFlux.eats_hub_catalog.services.definitions.ReservationCrudService;
 import com.proyectoFlux.eats_hub_catalog.services.definitions.RestaurantCatalogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -8,12 +12,37 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
+import java.util.UUID;
 
 @SpringBootApplication
 public class EatsHubCatalogApplication implements CommandLineRunner {
 
+	private ReservationCollection createTestReservation(
+			String restaurantId,
+			String customerName,
+			Integer partySize,
+			String date,
+			String time,
+			String notes) {
+
+		return ReservationCollection.builder()
+				.id(UUID.randomUUID())
+				.restaurantId(restaurantId)
+				.customerName(customerName)
+				.partySize(partySize)
+				.date(date)
+				.time(time)
+				.notes(notes)
+				.status(ReservationStatusEnum.PENDING)
+				.build();
+	}
+
 	@Autowired
-	private RestaurantCatalogService service;
+	private ReservationCrudService reservationCrudService;
+
+	@Autowired
+	private ReservationRepository reservationRepository;
+
 	public static void main(String[] args) {
 
 		SpringApplication.run(EatsHubCatalogApplication.class, args);
@@ -22,9 +51,75 @@ public class EatsHubCatalogApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		service.findByCity("Austin")
-				.doOnNext(System.out::println)
-				.subscribe();
 
+
+		System.out.println("=== STARTING RESERVATION INSERT TESTS ===\n");
+
+		final var parrillaModernaID = "0ee619ba-e95f-4103-99f7-ee9cdf831d90";
+		final var cafeNostalgiaID = "be33011c-13dd-45b9-a60e-e9adb8f4e022";
+
+
+		final var sarahReservation = createTestReservation(
+				parrillaModernaID,
+				"Sarah Johnson",
+				4,
+				"2025-06-15",
+				"19:30",
+				"Window table preferred"
+		);
+
+		final var michaelReservation = createTestReservation(
+				parrillaModernaID,
+				"Michael Davis",
+				2,
+				"2025-06-16",
+				"20:00",
+				"Anniversary dinner - romantic table"
+		);
+
+		final var emmaReservation = createTestReservation(
+				cafeNostalgiaID,
+				"Emma Wilson",
+				6,
+				"2025-06-17",
+				"18:00",
+				"Family birthday celebration"
+		);
+
+		final var sarahReservationCreated = reservationCrudService.createReservation(sarahReservation)
+				.block();
+
+		System.out.println("Sarah reservation: " + sarahReservationCreated.getId());
+
+		final var michaelReservationCreated = reservationCrudService.createReservation(michaelReservation)
+				.block();
+		System.out.println("Michael reservation: " + michaelReservationCreated.getId());
+
+		final var emmaReservationCreated = reservationCrudService.createReservation(emmaReservation)
+				.block();
+		System.out.println("Emma reservation: " + emmaReservationCreated.getId());
+
+		System.out.println("=== FINISHED RESERVATION INSERT TESTS ===");
+
+		System.out.println("=== INIT RESERVATION UPDATE TESTS ===");
+
+		final var michaelReservationToUpdate = reservationCrudService.readByReservationId(michaelReservationCreated.getId()).block();
+
+		michaelReservationToUpdate.setDate("20:30");
+		michaelReservationToUpdate.setPartySize(3);
+
+		final var michaelReservationUpdated = this.reservationRepository.save(michaelReservationToUpdate).block();
+
+		System.out.println("michael reservation updated: " + michaelReservationUpdated.getDate());
+		System.out.println("michael reservation updated: " + michaelReservationUpdated.getPartySize());
+
+		System.out.println("=== FINISHED RESERVATION INSERT TESTS ===");
+
+
+		Thread.sleep(300000);
+		System.out.println("=== INIT RESERVATION DELETE TESTS ===");
+		this.reservationCrudService.delateReservation(michaelReservationCreated.getId()).block();
+		System.out.println("=== FINISHED RESERVATION DELETE TESTS ===");
 	}
+
 }
