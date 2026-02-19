@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,8 @@ public class RestaurantCollection {
 
     private String name;
     private Integer capacity;
+    @Field("closedAt")
+    private String closeAt;
     private Address address;
     @Indexed
     private String cuisineType;

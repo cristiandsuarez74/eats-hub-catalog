@@ -25,6 +25,7 @@ public class ReservationCollection {
     private String customerName;
     private String customerEmail;
     private String date;
+
     private String time;
     private Integer partySize;
     @Indexed
