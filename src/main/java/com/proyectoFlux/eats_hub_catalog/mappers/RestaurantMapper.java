@@ -1,0 +1,37 @@
+package com.proyectoFlux.eats_hub_catalog.mappers;
+
+import com.proyectoFlux.eats_hub_catalog.collections.RestaurantCollection;
+import com.proyectoFlux.eats_hub_catalog.dtos.Review;
+import com.proyectoFlux.eats_hub_catalog.dtos.responses.RestaurantResponse;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Objects;
+
+@Mapper(componentModel ="spring")
+public interface RestaurantMapper {
+
+    @Mapping(target = "globalRating",expression = "java(calculateGlobalRating(collection.getReviews()))")
+    RestaurantResponse toResponse(RestaurantCollection collection);
+
+    default Flux<RestaurantResponse> toResponseFlux(Flux<RestaurantCollection> collectionFlux){
+        return collectionFlux.map(this::toResponse);
+    }
+    default Mono<RestaurantResponse> toResponseMono(Mono<RestaurantCollection> collectionMono){
+        return collectionMono.map(this::toResponse);
+    }
+
+    default Double calculateGlobalRating(List<Review> reviews){
+        if (Objects.isNull(reviews)||reviews.isEmpty()){
+            return 0.0;
+        }
+        return reviews.stream()
+                .filter(review -> Objects.nonNull(review.getRating()))
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+    }
+}
