@@ -44,7 +44,7 @@ public class ReservationValidator {
         return reservation ->{
             final var restauranteId= UUID.fromString(reservation.getRestaurantId());
             return restaurantRepository.findById(restauranteId)
-                    .switchIfEmpty(Mono.error(new ResourceNotFoundException("restauran no found")))
+                    .switchIfEmpty(Mono.error(new ResourceNotFoundException("Restaurant not found")))
                     .flatMap(restaurant->{
                         if (isRestaurantClose(restaurant,reservation.getTime())){
                             return Mono.error(new BusinessException("Restaurante already closed"));
