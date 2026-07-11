@@ -22,8 +22,10 @@ public class RestaurantCatalogServiceImpl implements RestaurantCatalogService {
     private final RestaurantRepository restaurantRepository;
 
     @Override
-    public Flux<RestaurantCollection> readAll() {
-        return restaurantRepository.findAll();
+    public Flux<RestaurantCollection> readAll(Integer page, Integer size) {
+        return restaurantRepository.findAll()
+                .skip((long) page *size)
+                .take(size);
     }
 
     @Override

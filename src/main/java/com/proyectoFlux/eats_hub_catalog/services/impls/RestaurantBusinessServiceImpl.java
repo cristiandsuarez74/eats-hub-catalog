@@ -22,29 +22,46 @@ public class RestaurantBusinessServiceImpl implements RestaurantBusinessService 
 
     private final RestaurantCatalogService service;
     private final RestaurantMapper mapper;
+    private final CatalogCacheService restaurantCache;
 
     @Override
-    public Flux<RestaurantResponse> readAll() {
-        log.info("reading all restaurants");
-        return service.readAll()
+    public Flux<RestaurantResponse> readAll(Integer page,Integer size) {
+        log.info("reading page:{},size: {}",page,size);
+        return service.readAll(page,size)
                 .transform(mapper::toResponseFlux)
                 .doOnComplete(()-> log.info("reading all restaurants completed"));
+
+
     }
 
     @Override
     public Flux<RestaurantResponse> readByCuisineType(String cuisineType) {
 
-        log.info("reading restaurants by cuisineType {}",cuisineType);
-        return service.readByCuisineType(cuisineType)
-                .transform(mapper::toResponseFlux)
-                .doOnComplete(()-> log.info("reading restaurants by cuisine type on completed"));
+        final String cacheKey= CatalogCacheService.buildCuisineTypeKey(cuisineType);
+
+        return restaurantCache.getCacheRestaurants(cacheKey)
+                .switchIfEmpty(
+                        this.service.readByCuisineType(cuisineType)
+                                .transform(this.mapper::toResponseFlux)
+                                .transform(restaurantDb-> this.restaurantCache.cacheRestaurants(cacheKey,restaurantDb))
+                )
+                                .doOnComplete(()-> log.info("reading restaurants by cuisine type on completed"));
+
     }
 
     @Override
     public Mono<RestaurantResponse> findByName(String name) {
         log.info("reading restaurant by name");
-        return service.findByName(name)
-                .transform(mapper::toResponseMono)
+
+
+        final String cacheKey= CatalogCacheService.buildNameKey(name);
+        return restaurantCache.getCacheRestaurant(cacheKey)
+                .switchIfEmpty(
+                        this.service.findByName(name)
+                                .transform(this.mapper::toResponseMono)
+                                .flatMap(restaurantDB ->this.restaurantCache.cacheRestaurant(cacheKey,restaurantDB))
+
+                )
                 .doOnSuccess(restaurant->{
                     if (Objects.isNull(restaurant)){
                         log.info("reading restaurants by name not found any restaurants");
@@ -58,17 +75,35 @@ public class RestaurantBusinessServiceImpl implements RestaurantBusinessService 
     @Override
     public Flux<RestaurantResponse> findByPriceRangeIn(List<PriceEnum> priceRange) {
         log.info("reading restaurant by priceRange {}",priceRange);
-        return service.findByPriceRangeIn(priceRange)
-                .transform(mapper::toResponseFlux)
+
+        final String cacheKey= CatalogCacheService.buildPriceKey(priceRange);
+        return restaurantCache.getCacheRestaurants(cacheKey)
+                .switchIfEmpty(
+                        this.service.findByPriceRangeIn(priceRange)
+                                .transform(this.mapper::toResponseFlux)
+                                .transform(restaurantDB-> this.restaurantCache.cacheRestaurants(cacheKey,restaurantDB))
+                )
                 .doOnComplete(()-> log.info("reading restaurants by priceRange completed"));
+
+
+
+
     }
 
     @Override
     public Flux<RestaurantResponse> findByCity(String city) {
         log.info("reading restaurant by city {}",city);
-        return service.findByCity(city)
-                .transform(mapper::toResponseFlux)
-                .doOnComplete(()-> log.info("reading restaurant by city completed"));
+
+        final String cacheKey= CatalogCacheService.buildCityKey(city);
+
+        return restaurantCache.getCacheRestaurants(cacheKey)
+                .switchIfEmpty(
+                        this.service.findByCity(city)
+                                .transform(this.mapper::toResponseFlux)
+                                .transform(restaurantDB-> this.restaurantCache.cacheRestaurants(cacheKey,restaurantDB))
+
+                ).doOnComplete(()-> log.info("reading restaurant by city completed"));
+
 
     }
 }

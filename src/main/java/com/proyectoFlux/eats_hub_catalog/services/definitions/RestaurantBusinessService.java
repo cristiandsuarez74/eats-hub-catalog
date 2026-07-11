@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface RestaurantBusinessService {
-    Flux<RestaurantResponse> readAll();
+    Flux<RestaurantResponse> readAll(Integer page, Integer size);
 
     Flux<RestaurantResponse> readByCuisineType(String cuisineType);
 
