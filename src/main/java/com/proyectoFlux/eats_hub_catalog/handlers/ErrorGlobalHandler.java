@@ -2,6 +2,7 @@ package com.proyectoFlux.eats_hub_catalog.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proyectoFlux.eats_hub_catalog.exceptions.BusinessException;
+import com.proyectoFlux.eats_hub_catalog.exceptions.ResourceNotFoundException;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,11 @@ public class ErrorGlobalHandler implements ErrorWebExceptionHandler {
             status=HttpStatus.UNPROCESSABLE_ENTITY;
             message=ex.getMessage();
             errorType=ERROR_TYPE_BUSINESS;
-        } else if (Objects.nonNull(ex.getMessage()) && ex.getMessage().contains(ERROR_MESSAGE_RESTAURANT_NOT_FOUND)) {
+        }else if (ex instanceof ResourceNotFoundException) {
+            status = HttpStatus.NOT_FOUND;
+            message = ex.getMessage();
+            errorType = ERROR_TYPE_NOT_FOUND;
+        }else if (Objects.nonNull(ex.getMessage()) && ex.getMessage().contains(ERROR_MESSAGE_RESTAURANT_NOT_FOUND)) {
 
             status=HttpStatus.NOT_FOUND;
             message=ERROR_MESSAGE_RESTAURANT_NOT_FOUND;

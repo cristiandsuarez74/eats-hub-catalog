@@ -44,10 +44,11 @@ public class ReservationHandler {
         return this.parseUUID(id)
                 .flatMap(reservationBusinessService::readByReservationId)
                 .flatMap(reservationResponse -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON).bodyValue(reservationResponse)
-                        .switchIfEmpty(ServerResponse.notFound().build())
-                        .doOnSuccess(response->log.info("reservation found: {}",response))
-                        .doOnError(error->log.info("Error with reading reservation error: {}",error.getMessage())));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(reservationResponse))
+                .switchIfEmpty(ServerResponse.notFound().build())
+                .doOnSuccess(response->log.info("reservation found: {}",response))
+                .doOnError(error->log.info("Error with reading reservation error: {}",error.getMessage()));
     }
     public Mono<ServerResponse>  updateReservation(ServerRequest request){
         final var id=request.pathVariable("id");

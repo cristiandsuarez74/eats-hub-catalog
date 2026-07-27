@@ -1,0 +1,41 @@
+#spring.data.mongodb.host=localhost
+#spring.data.mongodb.port=27018
+#spring.data.mongodb.database=catalog
+#spring.data.mongodb.username=master
+#spring.data.mongodb.password=pecoso
+#spring.data.mongodb.authentication-database=admin
+#spring.data.mongodb.auto-index-creation=true
+
+spring:
+  application:
+    name: eats_hub_catalog
+
+  webflux:
+    base-path: /catalog
+
+  cloud:
+    function:
+      definition: reviewEventConsumer
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+          consumer-properties:
+            auto.offset.reset: earliest
+
+      bindings:
+        reviewEventConsumer-in-0:
+          destination: rating-events
+          contentType: text/plain
+          consumer:
+            concurrency: 1
+            max-attempts: 3
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb: DEBUG
+
+
